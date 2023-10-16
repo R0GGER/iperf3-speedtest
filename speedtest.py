@@ -106,7 +106,7 @@ def server_sort(v):
 
 
 def run_test(server, s_data, reverse_mode=True):
-    cmd = ["iperf3", "-c", server, "-fk", "-O2", "-t12", "-P2"]
+    cmd = ["iperf3", "-c", server, "-fk", "-O2", "-t12", "-P2", "--connect-timeout", "5000"]
     if reverse_mode:
         cmd.append("-R")
     if "min_port" in s_data:
