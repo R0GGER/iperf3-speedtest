@@ -164,8 +164,11 @@ def run():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == "refresh":
-        refresh()
+    if 2 <= len(sys.argv) <= 3 and sys.argv[1] == "refresh":
+        if len(sys.argv) == 3 and sys.argv[2] == "all":
+            refresh(True)
+        else:
+            refresh()
     elif len(sys.argv) == 2 and sys.argv[1] == "run":
         run()
     elif len(sys.argv) == 3 and sys.argv[1] == "bench" and sys.argv[2].isdigit():
@@ -173,7 +176,7 @@ if __name__ == "__main__":
     else:
         print(
             f"Usage: {sys.argv[0]} [command]\n"
-            "    refresh: refresh server list from web source\n"
+            "    refresh [all]: refresh server list from web source\n"
             "    run: run download + upload test\n"
             "    bench [n]: benchmark closest n servers for best download speed"
         )
