@@ -1,27 +1,39 @@
 #!/usr/bin/env python3
 import json
 import re
+import socket
 import subprocess
 import sys
 from math import inf
 from random import randint, shuffle
-from statistics import mean
+from time import time
 
 import requests
 
 
+IPERF_CMD = "iperf3 -c {} -fk -O2 -t12 -P2 --connect-timeout 5000"
 SERVER_LIST = "https://iperf3serverlist.net/serverlist.json"
-PINGTIME = re.compile("time=([.\d]+) (m?s)")
-PORTRANGE = re.compile("-p (\d+)(-(\d+))?")
-SPEED = re.compile("^\[SUM\].* (\d+) Kbits/sec.*receiver", re.MULTILINE)
+PINGTIME = re.compile(r"time=([.\d]+) (m?s)")
+PORTRANGE = re.compile(r"-p (\d+)(-(\d+))?")
+SPEED = re.compile(r"^\[SUM\].* (\d+) Kbits/sec.*receiver", re.MULTILINE)
 
 
 def popen(cmd):
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-def ping(addr):
-    return popen(["ping", "-c", "5", "-w", "10", addr]).communicate()
+def tcpping(host, port):
+    af, socktype, proto, canonname, sa = socket.getaddrinfo(
+        host, port, socket.AF_UNSPEC, socket.SOCK_STREAM
+    )[0]
+    s = socket.socket(af, socktype, proto)
+    s.settimeout(1)
+    st = time()
+    s.connect((host, port))
+    d = time() - st
+    s.shutdown(socket.SHUT_RD)
+    del s
+    return d
 
 
 def refresh(checkall=False):
@@ -32,9 +44,9 @@ def refresh(checkall=False):
     except FileNotFoundError:
         pass
 
-    if not "best" in cache:
+    if "best" not in cache:
         cache["best"] = 0
-    if not "servers" in cache:
+    if "servers" not in cache:
         cache["servers"] = {}
 
     r = requests.get(SERVER_LIST)
@@ -47,7 +59,7 @@ def refresh(checkall=False):
         server_string = server["IP"].removeprefix("iperf3 -c ").split(maxsplit=1)
         addr = server_string[0]
 
-        if not addr in cache["servers"]:
+        if addr not in cache["servers"]:
             cache["servers"][addr] = {}
 
         # skip if last attempt to contact server failed
@@ -62,27 +74,25 @@ def refresh(checkall=False):
         if not any(opt["value"] == "-R" for opt in server["OPTIONS"]):
             continue
 
-        out, err = ping(addr)
-        out = out.decode("utf-8")
-        if not ", 0% packet loss" in out:
-            print(">>", addr, "failed")
-            cache["servers"][addr]["success"] = False
-            continue
-
-        avg_time = mean(
-            float(x[0]) * 10 ** (3 * int(x[1] == "s")) for x in PINGTIME.findall(out)
-        )
-        print(">>", addr, avg_time)
-        cache["servers"][addr]["ping"] = avg_time
-        cache["servers"][addr]["success"] = True
-
+        pingport = 5201
         if len(server_string) == 2:
             match = PORTRANGE.match(server_string[1])
             if match:
                 grps = match.groups()
                 cache["servers"][addr]["min_port"] = int(grps[0])
+                pingport = int(grps[0])
                 if grps[2]:
                     cache["servers"][addr]["max_port"] = int(grps[2])
+                    pingport = randint(int(grps[0]), int(grps[2]))
+
+        try:
+            pingtime = tcpping(addr, pingport)
+            print(">>", addr, pingtime)
+            cache["servers"][addr]["ping"] = pingtime
+            cache["servers"][addr]["success"] = True
+        except (ConnectionRefusedError, PermissionError, TimeoutError, socket.gaierror):
+            print(">>", addr, "failed")
+            cache["servers"][addr]["success"] = False
 
     best_server = ""
     best_time = inf
@@ -106,7 +116,7 @@ def server_sort(v):
 
 
 def run_test(server, s_data, reverse_mode=True):
-    cmd = ["iperf3", "-c", server, "-fk", "-O2", "-t12", "-P2", "--connect-timeout", "5000"]
+    cmd = IPERF_CMD.format(server).split()
     if reverse_mode:
         cmd.append("-R")
     if "min_port" in s_data:
