@@ -12,7 +12,7 @@ import requests
 
 
 IPERF_CMD = "iperf3 -c {} -fk -O2 -t12 -P2 --connect-timeout 5000"
-SERVER_LIST = "https://iperf3serverlist.net/serverlist.json"
+SERVER_LIST = "https://export.iperf3serverlist.net/json/all_servers-export.json"
 PINGTIME = re.compile(r"time=([.\d]+) (m?s)")
 PORTRANGE = re.compile(r"-p (\d+)(-(\d+))?")
 SPEED = re.compile(r"^\[SUM\].* (\d+) Kbits/sec.*receiver", re.MULTILINE)
@@ -50,13 +50,11 @@ def refresh(checkall=False):
         cache["servers"] = {}
 
     r = requests.get(SERVER_LIST)
-    j = json.loads(r.text)
-
-    servers = list(j["results"])
+    servers = r.json()
     shuffle(servers)
 
     for server in servers:
-        server_string = server["IP"].removeprefix("iperf3 -c ").split(maxsplit=1)
+        server_string = server["IP_HOST"].removeprefix("iperf3 -c ").split(maxsplit=1)
         addr = server_string[0]
 
         if addr not in cache["servers"]:
@@ -71,7 +69,7 @@ def refresh(checkall=False):
             continue
 
         # skip if server does not support reverse mode
-        if not any(opt["value"] == "-R" for opt in server["OPTIONS"]):
+        if not any(opt == "-R" for opt in server["OPTIONS"].split(",")):
             continue
 
         pingport = 5201
