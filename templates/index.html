@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speedtest Web UI</title>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1><img src="/static/iperf3serverlist_32.png" alt="iperf3 logo" class="iperf-logo"> iPERF3 SpeedTest</h1>
+        
+        <div class="button-group">
+            <button class="btn-refresh" onclick="refresh()" id="refreshBtn">
+                <i data-feather="refresh-cw"></i> Refresh
+            </button>
+            
+            <div class="button-container">
+                <button class="btn-bench" onclick="bench()" id="benchBtn">
+                    <i data-feather="activity"></i> Bench (download only)
+                </button>
+                <input type="number" id="benchNumber" value="3" min="1" max="20" placeholder="5">
+            </div>
+            
+            <button class="btn-run" onclick="run()" id="runBtn">
+                <i data-feather="play"></i> Speedtest
+            </button>
+        </div>
+        
+        <div class="button-explanation">
+            <table class="explanation-table">
+                <tr>
+                    <td><i data-feather='refresh-cw'></i></td>
+                    <td><strong>Refresh</strong></td>
+                    <td>Fetches the latest list of iperf3 servers and measures the ping to each server. This is the first step to get an up-to-date server list.</td>
+                </tr>
+                <tr>
+                    <td><i data-feather='activity'></i></td>
+                    <td><strong>Bench<br><span style='font-weight:normal;'>(download only)</span></strong></td>
+                    <td>Tests the download speed of the specified number of fastest servers (based on ping). Helps you find the server with the best download speed. Only download speed is measured.</td>
+                </tr>
+                <tr>
+                    <td><i data-feather='play'></i></td>
+                    <td><strong>Speedtest</strong></td>
+                    <td>Runs a full speed test on the best server (as found with Bench). Measures both download and upload speed.</td>
+                </tr>
+            </table>
+            <p style="margin-top:10px;">
+                <em>Tip:</em> Always start with <strong>Refresh</strong> and <strong>Bench</strong> before running a full <strong>Speedtest</strong>!
+            </p>
+        </div>
+        
+        <button class="accordion-toggle" id="outputAccordionBtn" onclick="toggleOutputAccordion()">
+            <span id="accordionIcon">▶</span> Show details
+        </button>
+        <div class="output-accordion" id="outputAccordion" style="display: none;">
+            <div class="output-container" id="output"></div>
+        </div>
+        
+        <div class="results-container" id="results" style="display: none;">
+            <div class="speed-results">
+                <div class="speed-card download">
+                    <div class="speed-icon"><i data-feather="download"></i></div>
+                    <div class="speed-label">Download</div>
+                    <div class="speed-value" id="downloadSpeed">-</div>
+                    <div class="speed-unit" id="downloadUnit">-</div>
+                </div>
+                <div class="speed-card upload">
+                    <div class="speed-icon"><i data-feather="upload"></i></div>
+                    <div class="speed-label">Upload</div>
+                    <div class="speed-value" id="uploadSpeed">-</div>
+                    <div class="speed-unit" id="uploadUnit">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="spinnerOverlay" class="spinner-overlay" style="display: none;">
+        <div class="spinner-content">
+            <i data-feather="loader" class="spinner-icon"></i>
+            <div class="spinner-text">Test running...</div>
+        </div>
+    </div>
+
+    <script>
+        function setButtonsDisabled(disabled) {
+            document.getElementById('refreshBtn').disabled = disabled;
+            document.getElementById('benchBtn').disabled = disabled;
+            document.getElementById('runBtn').disabled = disabled;
+        }
+        
+        function updateOutput(message, type = 'normal') {
+            const output = document.getElementById('output');
+            // Remove any existing spinner icon
+            const prevLoader = output.querySelector('.loading-icon');
+            if (prevLoader) prevLoader.remove();
+
+            if (type === 'loading') {
+                output.innerHTML += '<i data-feather="loader" class="output-icon loading-icon"></i> ' + message + '\n';
+            } else if (type === 'error') {
+                output.innerHTML += '<i data-feather="x-circle" class="output-icon error-icon"></i> ' + message + '\n';
+            } else if (type === 'success') {
+                output.innerHTML += '<i data-feather="check-circle" class="output-icon success-icon"></i> ' + message + '\n<br>\n';
+            } else {
+                output.innerHTML += message + '\n';
+            }
+
+            // Initialize new Feather icons
+            feather.replace();
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        async function refresh() {
+            setButtonsDisabled(true);
+            document.getElementById('output').innerHTML = '';
+            clearSpeedResults();
+            showSpinner();
+            updateOutput('Starting server refresh...', 'loading');
+            
+            try {
+                const response = await fetch('/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateOutput('Server refresh completed successfully!', 'success');
+                } else {
+                    updateOutput('Server refresh failed!', 'error');
+                }
+                
+                updateOutput(data.output);
+                
+            } catch (error) {
+                updateOutput('Network error: ' + error.message, 'error');
+                console.error('Refresh error:', error);
+            } finally {
+                setButtonsDisabled(false);
+                hideSpinner();
+            }
+        }
+        
+        async function bench() {
+            const number = document.getElementById('benchNumber').value;
+            
+            if (!number || number < 1) {
+                updateOutput('Please enter a valid number (1 or higher)', 'error');
+                return;
+            }
+            
+            setButtonsDisabled(true);
+            document.getElementById('output').innerHTML = '';
+            clearSpeedResults();
+            showSpinner();
+            updateOutput(`Starting benchmark with ${number} servers...`, 'loading');
+            
+            try {
+                const response = await fetch('/bench', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ number: parseInt(number) })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateOutput('Benchmark completed successfully!', 'success');
+                    // Parse and display best download speed
+                    const bestDownload = parseBenchBestDownload(data.output);
+                    if (bestDownload) {
+                        displaySpeedResults(bestDownload, null);
+                    }
+                } else {
+                    updateOutput('Benchmark failed!', 'error');
+                }
+                
+                updateOutput(data.output);
+                
+            } catch (error) {
+                updateOutput('Network error: ' + error.message, 'error');
+                console.error('Bench error:', error);
+            } finally {
+                setButtonsDisabled(false);
+                hideSpinner();
+            }
+        }
+        
+        // Parse best download speed from bench output
+        function parseBenchBestDownload(output) {
+            // Look for: Result: 945.9 Mbps (or Kbps)
+            const regex = /Result: ([\d.]+) (M|K)bps/g;
+            let match;
+            let best = null;
+            while ((match = regex.exec(output)) !== null) {
+                const value = parseFloat(match[1]);
+                const unit = match[2] === 'M' ? 'Mbps' : 'Kbps';
+                if (!best || (unit === best.unit && value > best.value) || (unit === 'Mbps' && best.unit === 'Kbps')) {
+                    best = { value, unit };
+                }
+            }
+            return best;
+        }
+        
+        async function run() {
+            setButtonsDisabled(true);
+            document.getElementById('output').innerHTML = '';
+            clearSpeedResults();
+            showSpinner();
+            updateOutput('Starting speed test...', 'loading');
+            
+            try {
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+
+                // Check for known iperf3 errors in the output
+                const errorPatterns = [
+                    'the server is busy running a test',
+                    'unable to receive control message',
+                    'Connection reset by peer',
+                    'error -'
+                ];
+                const hasIperfError = errorPatterns.some(pattern => data.output.includes(pattern));
+
+                if (data.success && !hasIperfError) {
+                    updateOutput('Speed test completed successfully!', 'success');
+                    // Parse and display speed results
+                    const { downloadSpeed, uploadSpeed } = parseSpeedResult(data.output);
+                    if (downloadSpeed || uploadSpeed) {
+                        displaySpeedResults(downloadSpeed, uploadSpeed);
+                    }
+                } else {
+                    updateOutput('Speed test failed! See output for details.', 'error');
+                }
+
+                updateOutput(data.output);
+
+            } catch (error) {
+                updateOutput('Network error: ' + error.message, 'error');
+                console.error('Run error:', error);
+            } finally {
+                setButtonsDisabled(false);
+                hideSpinner();
+            }
+        }
+        
+        // Initialize Feather icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+        });
+        
+        // Initialize output area
+        document.getElementById('output').textContent = '';
+        
+        function parseSpeedResult(output) {
+            const lines = output.split('\n');
+            let downloadSpeed = null;
+            let uploadSpeed = null;
+            
+            for (const line of lines) {
+                if (line.includes('Result:')) {
+                    const match = line.match(/Result: ([\d.]+) (Mbps|Kbps)/);
+                    if (match) {
+                        const speed = parseFloat(match[1]);
+                        const unit = match[2];
+                        
+                        // Determine if it's download or upload based on context
+                        // Download tests usually come first, upload tests second
+                        if (downloadSpeed === null) {
+                            downloadSpeed = { value: speed, unit: unit };
+                        } else if (uploadSpeed === null) {
+                            uploadSpeed = { value: speed, unit: unit };
+                        }
+                    }
+                }
+            }
+            
+            return { downloadSpeed, uploadSpeed };
+        }
+        
+        function displaySpeedResults(downloadSpeed, uploadSpeed) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (downloadSpeed) {
+                document.getElementById('downloadSpeed').textContent = downloadSpeed.value;
+                document.getElementById('downloadUnit').textContent = downloadSpeed.unit;
+            }
+            
+            if (uploadSpeed) {
+                document.getElementById('uploadSpeed').textContent = uploadSpeed.value;
+                document.getElementById('uploadUnit').textContent = uploadSpeed.unit;
+            }
+            
+            resultsContainer.style.display = 'block';
+        }
+        
+        function clearSpeedResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('downloadSpeed').textContent = '-';
+            document.getElementById('downloadUnit').textContent = '-';
+            document.getElementById('uploadSpeed').textContent = '-';
+            document.getElementById('uploadUnit').textContent = '-';
+        }
+        
+        function toggleOutputAccordion() {
+            const acc = document.getElementById('outputAccordion');
+            const icon = document.getElementById('accordionIcon');
+            if (acc.style.display === 'none') {
+                acc.style.display = 'block';
+                icon.textContent = '▼';
+                document.getElementById('outputAccordionBtn').innerHTML = '<span id="accordionIcon">▼</span> Hide details';
+            } else {
+                acc.style.display = 'none';
+                icon.textContent = '▶';
+                document.getElementById('outputAccordionBtn').innerHTML = '<span id="accordionIcon">▶</span> Show details';
+            }
+        }
+
+        function showSpinner() {
+            document.getElementById('spinnerOverlay').style.display = 'flex';
+            feather.replace();
+        }
+        function hideSpinner() {
+            document.getElementById('spinnerOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html> 

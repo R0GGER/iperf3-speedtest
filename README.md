@@ -1,141 +1,66 @@
-# Speedtest Script using public iperf3-servers
+# iPERF3 SpeedTest - Quick Guide
 
-A Python-based network speed testing tool that uses iperf3 servers to measure your internet connection speed.
+A simple Python tool and web app to measure your internet speed using public iperf3 servers.
 
-Forked from: https://github.com/afontenot/speedtest
+## Features
+- **Command-line tool** (`speedtest.py`) for quick speed tests
+- **Modern web interface** (Flask app) for easy use in your browser
+- **Benchmarks multiple servers and finds the fastest**
+- **Shows both download and upload speeds**
 
-## Overview
-
-This script provides a command-line interface for testing your internet connection speed by:
-1. Fetching a list of available iperf3 servers from the internet
-2. Testing ping times to find the fastest servers
-3. Running speed tests to measure download and upload speeds
-4. Caching results for faster subsequent runs
-
-## Prerequisites
-
-### Required Software
-- **Python 3.6+** - The script is written in Python
-- **iperf3** - Network performance measurement tool
-- **requests** - Python library for HTTP requests
-
-### Installing Dependencies
-
-#### Python Dependencies
-```bash
-pip install requests
-```
-
-#### iperf3 Installation
-
-**Windows:**
-- Download from: [ar51an/iperf3-win-builds](https://github.com/ar51an/iperf3-win-builds/releases)
-- Extract and add to your PATH environment variable
-
-**macOS:**
-```bash
-brew install iperf3
-```
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt-get install iperf3
-```
-
-**Linux (CentOS/RHEL):**
-```bash
-sudo yum install iperf3
-```
+## Quick Install
+1. **Install Python 3.6+**
+2. **Install iperf3**
+   - Windows: [Download here](https://iperf.fr/iperf-download.php) and add to PATH
+   - macOS: `brew install iperf3`
+   - Linux: `sudo apt install iperf3`
+3. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Usage
 
-The script supports three main commands:
+### Command Line
+- **Refresh server list:**
+  ```bash
+  python speedtest.py refresh
+  ```
+- **Benchmark fastest servers:**
+  ```bash
+  python speedtest.py bench 3
+  ```
+- **Run speed test (download + upload):**
+  ```bash
+  python speedtest.py run
+  ```
 
-### 1. Refresh Server List
-```bash
-python speedtest.py refresh
-```
-
-**What it does:**
-- Downloads the latest list of iperf3 servers from the internet
-- Tests ping times to each server
-- Caches the results in `cache.json`
-- Skips servers that don't support reverse mode (download testing)
-
-**Options:**
-- `refresh all` - Tests all servers, including previously failed ones
-
-**Output:**
-- Shows ping times for each server tested
-- Displays the best server found
-- Creates/updates `cache.json` file
-
-### 2. Benchmark Servers
-```bash
-python speedtest.py bench <number>
-```
-
-**Parameters:**
-- `<number>` - Number of fastest servers to test (e.g., `3` for top 3)
-
-**What it does:**
-- Tests download speeds on the fastest servers (based on ping times)
-- Finds the server with the best download performance
-- Marks it as the preferred server for future tests
-
-**Example:**
-```bash
-python speedtest.py bench 5
-```
-
-### 3. Run Speed Test
-```bash
-python speedtest.py run
-```
-
-**What it does:**
-- Runs both download and upload tests on the preferred server
-- Uses the server selected during benchmarking
-
-**Output:**
-- Download speed test results
-- Upload speed test results
-- Results displayed in Mbps (if ≥ 10 Mbps) or Kbps
+### Web Interface
+- **Start the web app:**
+  ```bash
+  python app.py
+  ```
+- Open your browser at [http://localhost:5000](http://localhost:5000)
+- Use the buttons:
+  - **Refresh:** Get latest server list and ping times
+  - **Bench:** Test download speed of fastest servers (number is adjustable)
+  - **Speedtest:** Run full download + upload test on the best server
 
 ## File Structure
-
 ```
 speedtest/
-├── speedtest.py    # Speedtest script.
-├── cache.json      # Cached server data (created automatically).
-└── README.md       # This readme.
+├── speedtest.py      # Command-line tool
+├── app.py            # Flask web app
+├── requirements.txt  # Python dependencies
+├── static/           # CSS, images
+├── templates/        # HTML templates
+└── cache.json        # Server cache (auto-generated)
 ```
 
-### cache.json Structure
-```json
-{
-  "best": 0.0035796165466308594,
-  "preferred": "ping-ams1.online.net",
-  "servers": {
-    "server1.com": {
-      "ping": 0.015,
-      "success": true,
-      "min_port": 5201,
-      "max_port": 5210
-    }
-  }
-}
-```
+## Tips
+- Always start with **Refresh** and **Bench** before running a full speed test
+- The web UI shows results in a clear dashboard and lets you view detailed output
+- All results are cached for faster repeated tests
 
-## Technical Details
-
-### Server Selection Criteria
-- Must support reverse mode (`-R` option)
-- Ping time < 2x the best ping time (unless using `refresh all`)
-- Previously successful connections are prioritized
-
-### Test Parameters
-- **Duration:** 12 seconds per test
-- **Parallel streams:** 2 connections
-- **Timeout:** 5 seconds connection timeout
-- **Format:** Results in Kbps/Mbps
+---
+Speedtest.py script forked from: https://github.com/afontenot/speedtest

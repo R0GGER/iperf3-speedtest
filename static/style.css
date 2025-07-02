@@ -1,0 +1,363 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+h1 i {
+    width: 24px;
+    height: 24px;
+    stroke: #007bff;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.button-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+button i {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-refresh {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-refresh:hover {
+    background-color: #0056b3;
+}
+
+.btn-bench {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-bench:hover {
+    background-color: #1e7e34;
+}
+
+.btn-run {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-run:hover {
+    background-color: #c82333;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 60px;
+}
+
+.output-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    min-height: 200px;
+    max-height: 500px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.output-container:empty::before {
+    content: "Output will appear here...";
+    color: #6c757d;
+    font-style: italic;
+}
+
+.loading {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.output-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.loading-icon {
+    stroke: #007bff;
+    animation: spin 1s linear infinite;
+}
+
+.error-icon {
+    stroke: #dc3545;
+}
+
+.success-icon {
+    stroke: #28a745;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.results-container {
+    margin-top: 20px;
+    padding: 20px;            
+    border-radius: 10px;            
+}
+
+.results-container h3 {
+    margin: 0 0 20px 0;
+    text-align: center;
+    font-size: 18px;
+}
+
+.speed-results {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.speed-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    min-width: 120px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.speed-icon {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.speed-icon i {
+    width: 32px;
+    height: 32px;
+    stroke: currentColor;
+}
+
+.speed-label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.speed-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.speed-unit {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.speed-card.download {
+    border: 2px solid #28a745;
+}
+
+.speed-card.upload {
+    border: 2px solid #d81608;
+}
+
+@media (max-width: 768px) {
+    .button-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .button-container {
+        justify-content: center;
+    }
+    
+    button {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    input[type="number"] {
+        padding: 10px;
+        width: 80px;
+        font-size: 16px;
+    }
+    
+    .speed-results {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .speed-card {
+        min-width: auto;
+    }
+}
+
+.accordion-toggle {
+    background: none;
+    border: none;
+    color: #007bff;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+}
+.accordion-toggle:focus {
+    outline: none;
+    text-decoration: underline;
+}
+#accordionIcon {
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+.output-accordion {
+    margin-bottom: 10px;
+}
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255,255,255,0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.spinner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.spinner-icon {
+    width: 48px;
+    height: 48px;
+    stroke: #007bff;
+    animation: spin 1s linear infinite;
+}
+.spinner-text {
+    font-size: 18px;
+    color: #333;
+    font-weight: 500;
+}
+.button-explanation {
+    margin-top: 18px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 15px;
+    color: #333;
+}
+.explanation-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.explanation-table td {
+    padding: 6px 8px 6px 0;
+    vertical-align: top;
+}
+.explanation-table td:first-child {
+    width: 32px;
+    text-align: center;
+}
+.explanation-table i {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+.explanation-table td:nth-child(2) {
+    width: 140px;
+    font-size: 15px;
+}
+.explanation-table td:last-child {
+    font-size: 15px;
+}
+.button-explanation em {
+    color: #007bff;
+}
+.spinner-overlay,
+.spinner-content {
+    user-select: none;
+    caret-color: transparent;
+}
+.iperf-logo {
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    margin-right: 8px;
+} 
