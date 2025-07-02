@@ -12,7 +12,7 @@ import requests
 
 
 IPERF_CMD = "iperf3 -c {} -fk -O2 -t12 -P2 --connect-timeout 5000"
-SERVER_LIST = "https://export.iperf3serverlist.net/json/all_servers-export.json"
+SERVER_LIST = "https://export.iperf3serverlist.net/listed_iperf3_servers.json"
 PINGTIME = re.compile(r"time=([.\d]+) (m?s)")
 PORTRANGE = re.compile(r"-p (\d+)(-(\d+))?")
 SPEED = re.compile(r"^\[SUM\].* (\d+) Kbits/sec.*receiver", re.MULTILINE)
@@ -54,7 +54,7 @@ def refresh(checkall=False):
     shuffle(servers)
 
     for server in servers:
-        server_string = server["IP_HOST"].removeprefix("iperf3 -c ").split(maxsplit=1)
+        server_string = server["IP/HOST"].removeprefix("iperf3 -c ").split(maxsplit=1)
         addr = server_string[0]
 
         if addr not in cache["servers"]:
