@@ -91,8 +91,7 @@
         }
         
         function updateOutput(message, type = 'normal') {
-            const output = document.getElementById('output');
-            // Remove any existing spinner icon
+            const output = document.getElementById('output');           
             const prevLoader = output.querySelector('.loading-icon');
             if (prevLoader) prevLoader.remove();
 
@@ -180,7 +179,6 @@
                 
                 if (data.success) {
                     updateOutput('Benchmark completed successfully!', 'success');
-                    // Parse and display best download speed
                     const bestDownload = parseBenchBestDownload(data.output);
                     if (bestDownload) {
                         displaySpeedResults(bestDownload, null);
@@ -200,9 +198,7 @@
             }
         }
         
-        // Parse best download speed from bench output
         function parseBenchBestDownload(output) {
-            // Look for: Result: 945.9 Mbps (or Kbps)
             const regex = /Result: ([\d.]+) (M|K)bps/g;
             let match;
             let best = null;
@@ -237,7 +233,6 @@
                 
                 const data = await response.json();
 
-                // Check for known iperf3 errors in the output
                 const errorPatterns = [
                     'the server is busy running a test',
                     'unable to receive control message',
@@ -247,8 +242,7 @@
                 const hasIperfError = errorPatterns.some(pattern => data.output.includes(pattern));
 
                 if (data.success && !hasIperfError) {
-                    updateOutput('Speed test completed successfully!', 'success');
-                    // Parse and display speed results
+                    updateOutput('Speed test completed successfully!', 'success');                    
                     const { downloadSpeed, uploadSpeed } = parseSpeedResult(data.output);
                     if (downloadSpeed || uploadSpeed) {
                         displaySpeedResults(downloadSpeed, uploadSpeed);
@@ -267,8 +261,7 @@
                 hideSpinner();
             }
         }
-        
-        // Initialize Feather icons
+
         document.addEventListener('DOMContentLoaded', function() {
             feather.replace();
         });
@@ -288,8 +281,6 @@
                         const speed = parseFloat(match[1]);
                         const unit = match[2];
                         
-                        // Determine if it's download or upload based on context
-                        // Download tests usually come first, upload tests second
                         if (downloadSpeed === null) {
                             downloadSpeed = { value: speed, unit: unit };
                         } else if (uploadSpeed === null) {
