@@ -29,7 +29,7 @@ pip install requests
 #### iperf3 Installation
 
 **Windows:**
-- Download from: https://iperf.fr/iperf-download.php
+- Download from: [ar51an/iperf3-win-builds](https://github.com/ar51an/iperf3-win-builds/releases)
 - Extract and add to your PATH environment variable
 
 **macOS:**
