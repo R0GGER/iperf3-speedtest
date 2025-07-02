@@ -2,6 +2,8 @@
 
 A simple Python tool and web app to measure your internet speed using public iperf3 servers.
 
+![](screenshots/speedtest_1.png)  
+More [screenshots](screenshots)...
 ## Features
 - **Command-line tool** (`speedtest.py`) for quick speed tests
 - **Modern web interface** (Flask app) for easy use in your browser
