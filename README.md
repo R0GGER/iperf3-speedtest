@@ -1,4 +1,4 @@
-# iPERF3 SpeedTest - Quick Guide
+# iPERF3 SpeedTest
 
 A simple Python tool and web app to measure your internet speed using public iperf3 servers.
 
